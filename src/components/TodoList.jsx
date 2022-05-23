@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { useRecoilState } from "recoil";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { todoListState, currentTabState } from "../store/state";
 import { EditBtn, CompleteBtn, DeleteBtn } from "./AllSvgs";
@@ -15,7 +15,7 @@ const Container = styled.div`
   box-sizing: border-box;
 `;
 
-const Item = styled.div`
+const Item = styled(motion.div)`
   display: flex;
   flex-direction: column;
   background: radial-gradient(
@@ -67,18 +67,20 @@ const TodoList = () => {
     if (editIndex > -1) {
       const textarea = document.querySelector(`#text-${editIndex}`)
       textarea.focus()
+      setMessage(todoList[editIndex].message)
     }
-    console.log(editIndex)
   }, [editIndex])
 
 
   const handleSave = (index) => {
     const temp = JSON.parse(JSON.stringify(todoList));
-    temp[index].message = message;
-    setTodoList(temp);
-    setMessage("");
-    setEditIndex(-1);
-    handleSave2Local(temp);
+    if (message !== "" && message !== todoList[editIndex].message) {
+      temp[index].message = message;
+      setTodoList(temp);
+      setMessage("");
+      setEditIndex(-1);
+      handleSave2Local(temp);
+    }
   };
 
   const handleComplete = (index) => {
@@ -101,10 +103,15 @@ const TodoList = () => {
 
   return (
     <Container>
+      <AnimatePresence>
       {todoList.map(
         (item, index) =>
           (item.type === currentTab || currentTab === 2) && (
-            <Item key={index}>
+            <Item key={index}
+              initial={{ opacity: 0, x: 300 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -300 }}  
+            >
               <TextArea
                 id={`text-${index}`}
                 disabled={editIndex !== index}
@@ -146,6 +153,7 @@ const TodoList = () => {
             </Item>
           )
       )}
+      </AnimatePresence>
     </Container>
   );
 };
