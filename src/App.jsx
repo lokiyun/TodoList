@@ -69,6 +69,7 @@ const App = () => {
   const tabList = ["正在进行中", "已完成", "所有"];
 
   const handlePress = (e) => {
+    if (value === '') return
     if (e.key === "Enter") {
       const list= [
         ...todoList,

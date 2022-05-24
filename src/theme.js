@@ -4,5 +4,4 @@ export const DarkTheme = {
   fontFamily: "'Zhi Mang Xing', cursive",
   bodyRGB: '45,52,54',
   textRGB: '223,230,233',
-  
 }

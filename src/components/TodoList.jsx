@@ -2,18 +2,29 @@ import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { useRecoilState } from "recoil";
 import { motion, AnimatePresence } from "framer-motion";
+import { unstable_batchedUpdates } from "react-dom"
 
 import { todoListState, currentTabState } from "../store/state";
 import { EditBtn, CompleteBtn, DeleteBtn } from "./AllSvgs";
 import { handleSave2Local } from "../utils/index";
 
 const Container = styled.div`
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   width: 100%;
   padding: 1rem 2rem;
   box-sizing: border-box;
 `;
+
+const Success = styled.div`
+  position: absolute;
+  top: .5rem;
+  right: .5rem;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid #00b894;
+  color: #00b894;
+`
 
 const Item = styled(motion.div)`
   display: flex;
@@ -34,17 +45,27 @@ const Item = styled(motion.div)`
 `;
 
 const TextArea = styled.textarea`
-  padding: 1rem 0.5rem;
+  padding: 0 0.5rem;
   height: 70%;
   line-break: anywhere;
   background-color: ${(props) => (props.edit ? "#fff" : "transparent")};
   border: ${(props) => (props.edit ? "1px solid #000" : "none")};
+  font-size: 1.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: ${props => props.disabled ? 3 : -1};
+  -webkit-box-orient: vertical;
+  line-height: 1.9rem;
+  resize: none;
+  /* font-family: ${props => props.theme.fontFamily}; */
 `;
 
 const Actions = styled.div`
   display: flex;
   justify-content: flex-end;
   opacity: 0;
+  margin-top: 0.5rem;
 
   transition: opacity 0.3s ease;
 
@@ -76,12 +97,15 @@ const TodoList = () => {
     const temp = JSON.parse(JSON.stringify(todoList));
     if (message !== "" && message !== todoList[editIndex].message) {
       temp[index].message = message;
-      setTodoList(temp);
-      setMessage("");
-      setEditIndex(-1);
+      unstable_batchedUpdates(() => {
+        setTodoList(temp);
+        setMessage("");
+        setEditIndex(-1);
+      })
+      
       handleSave2Local(temp);
     }
-  };
+  }
 
   const handleComplete = (index) => {
     const temp = JSON.parse(JSON.stringify(todoList));
@@ -91,6 +115,7 @@ const TodoList = () => {
   };
 
   const handleChangeMessage = (e, index) => {
+    // 将message暂存到localstorage，setMessage时再统一保存
     setMessage(e.target.value);
   };
 
@@ -112,6 +137,9 @@ const TodoList = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -300 }}  
             >
+              {
+                item.type === 1 && <Success>Success</Success>
+              }
               <TextArea
                 id={`text-${index}`}
                 disabled={editIndex !== index}
@@ -119,12 +147,14 @@ const TodoList = () => {
                 onChange={(e) => handleChangeMessage(e, index)}
               ></TextArea>
               <Actions>
-                <Action
+                {
+                  item.type !== 1 && <Action
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => {
                     if (editIndex === index) {
                       handleSave(index);
+                      setEditIndex(-1)
                     } else {
                       setEditIndex(index);
                       document.querySelector(`#text-${index}`).focus()
@@ -133,6 +163,7 @@ const TodoList = () => {
                 >
                   <EditBtn width={25} height={25} />
                 </Action>
+                }
                 {
                   item.type !== 1 && <Action
                   whileHover={{ scale: 1.1 }}
